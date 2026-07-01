@@ -5,14 +5,21 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from . import network
 
 BASE = Path(__file__).resolve().parent
 app = FastAPI(title="gunjop-net")
+app.mount("/static", StaticFiles(directory=str(BASE / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE / "templates"))
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return FileResponse(BASE / "static" / "favicon.svg", media_type="image/svg+xml")
 
 
 @app.get("/", response_class=HTMLResponse)
