@@ -10,13 +10,23 @@ activo para poder entrar aunque no recuerdes la IP.
 
 ## Instalar (replicar en otra Raspberry Pi)
 
+Un solo comando — descarga, instala y arranca solo:
+
 ```bash
-git clone <repo> gunjop-net
-cd gunjop-net
-sudo ./install.sh
+curl -sSL https://raw.githubusercontent.com/osmar-pj/rb-network/main/install.sh | sudo bash
 ```
 
 Luego conéctate al WiFi **wapsi** (clave `12345678`) y abre `http://192.168.4.1:3000`.
+
+<details>
+<summary>Alternativa: instalar desde una copia local</summary>
+
+```bash
+git clone https://github.com/osmar-pj/rb-network.git
+cd rb-network
+sudo ./install.sh
+```
+</details>
 
 ## Personalizar
 
