@@ -18,9 +18,9 @@ templates = Jinja2Templates(directory=str(BASE / "templates"))
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     return templates.TemplateResponse(
+        request,
         "index.html",
         {
-            "request": request,
             "devices": network.get_devices(),
             "networks": network.scan_wifi(),
         },
@@ -53,7 +53,7 @@ def ethernet_dhcp(request: Request, con_name: str = Form(...)):
 
 def _result(request: Request, ok: bool, msg: str) -> HTMLResponse:
     return templates.TemplateResponse(
-        "_result.html", {"request": request, "ok": ok, "msg": msg}
+        request, "_result.html", {"ok": ok, "msg": msg}
     )
 
 
