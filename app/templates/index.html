@@ -1,3 +1,4 @@
+{% from '_static_fields.html' import static_fields %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -75,6 +76,24 @@
     .tag{font-size:.68rem; font-weight:600; padding:.1rem .4rem; border-radius:5px;
       border:1px solid var(--border); color:var(--muted); flex:none}
     .tag.manual{color:var(--accent); border-color:var(--accent)}
+
+    /* campos de IP estática (cajitas por octeto) */
+    .sfields{margin-top:.2rem}
+    .fl{display:block; font-size:.78rem; font-weight:600; color:var(--muted); margin:.75rem 0 .2rem}
+    .fl .opt{font-weight:400; color:var(--muted)}
+    .ipgroup{display:inline-flex; align-items:center; gap:.1rem; background:var(--surface-2);
+      border:1px solid var(--border); border-radius:9px; padding:.25rem .45rem}
+    .ipgroup.bad{border-color:var(--err)}
+    .ipgroup b{color:var(--muted); font-weight:700; padding:0 .1rem}
+    .oct{width:3.2ch; text-align:center; border:0!important; background:transparent!important;
+      padding:.3rem 0!important; margin:0!important; font-size:.98rem; color:var(--text);
+      font-variant-numeric:tabular-nums; box-shadow:none!important}
+    .oct:focus{outline:none; background:var(--accent-weak)!important; border-radius:5px}
+    .sel{width:100%; font-size:.9rem; padding:.55rem .6rem; color:var(--text);
+      background:var(--surface-2); border:1px solid var(--border); border-radius:9px; margin-top:.1rem}
+    .sel:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-weak)}
+    .ferr{color:var(--err); font-size:.8rem; margin:.6rem 0 0; min-height:1em; font-weight:500}
+    button[disabled]{opacity:.5; cursor:not-allowed}
 
     /* inputs & buttons */
     input{width:100%; font-size:.9rem; padding:.6rem .7rem; color:var(--text);
@@ -180,9 +199,7 @@
             <div class="lbl">IP fija (estática)</div>
             <form hx-post="/connection/static" hx-target="#result">
               <input type="hidden" name="con_name" value="{{ d.connection }}">
-              <input name="ip_cidr" value="{{ d.ip or '' }}" placeholder="IP / máscara (ej. 192.168.1.10/24)" required>
-              <input name="gateway" value="{{ d.gateway }}" placeholder="Puerta de enlace (ej. 192.168.1.1)" required>
-              <input name="dns" value="{{ d.dns }}" placeholder="DNS (ej. 8.8.8.8)" required>
+              {{ static_fields(d.ip_addr, d.mask, d.gateway, d.dns1, d.dns2) }}
               <button type="submit" class="btn-primary">Guardar IP estática</button>
             </form>
             <div class="lbl" style="margin-top:1rem">Automática</div>
@@ -226,5 +243,87 @@
     </section>
 
   </div>
+
+  <script>
+  (function(){
+    // IP -> entero de 32 bits (o null si no es una IPv4 válida)
+    function ip2int(s){
+      var p=(s||'').split('.');
+      if(p.length!==4) return null;
+      var n=0;
+      for(var i=0;i<4;i++){
+        if(!/^\d{1,3}$/.test(p[i])) return null;
+        var o=+p[i]; if(o>255) return null;
+        n=n*256+o;
+      }
+      return n>>>0;
+    }
+    // Inicializa las cajitas por octeto: solo dígitos, 0-255, auto-avance, pegar
+    function initGroups(root){
+      root.querySelectorAll('.ipgroup').forEach(function(g){
+        if(g._init) return; g._init=true;
+        var octs=[].slice.call(g.querySelectorAll('.oct'));
+        var hid=g.querySelector('input[type=hidden]');
+        function sync(){
+          var parts=octs.map(function(o){return o.value.trim();});
+          hid.value = parts.every(function(p){return p==='';}) ? '' : parts.join('.');
+          var f=g.closest('form'); if(f) validateForm(f);
+        }
+        octs.forEach(function(o,i){
+          o.addEventListener('input',function(){
+            o.value=o.value.replace(/[^0-9]/g,'').slice(0,3);
+            if(o.value!=='' && +o.value>255) o.value='255';
+            if(o.value.length===3 && i<3) octs[i+1].focus();
+            sync();
+          });
+          o.addEventListener('keydown',function(e){
+            if((e.key==='.'||e.key===' ') && i<3){ e.preventDefault(); octs[i+1].focus(); }
+            else if(e.key==='Backspace' && o.value==='' && i>0){ octs[i-1].focus(); }
+          });
+          o.addEventListener('paste',function(e){
+            var t=((e.clipboardData||window.clipboardData).getData('text')||'').trim();
+            var m=t.match(/(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/);
+            if(m){ e.preventDefault(); for(var k=0;k<4;k++){ octs[k].value=Math.min(255,+m[k+1]); } sync(); }
+          });
+        });
+        sync();
+      });
+    }
+    // Valida el formulario y bloquea el botón si algo está mal
+    function validateForm(f){
+      var box=f.querySelector('.sfields'); if(!box) return true;
+      var err=f.querySelector('.ferr'), btn=f.querySelector('button[type=submit]');
+      function v(n){ var el=f.querySelector('[name="'+n+'"]'); return el ? el.value.trim() : ''; }
+      var ip=v('ip'), mask=v('mask'), gw=v('gateway'), d1=v('dns1'), d2=v('dns2');
+      var optional=box.hasAttribute('data-optional');
+      var msg='';
+      if(optional && !ip && !gw && !d1 && !d2){
+        msg='';  // WiFi sin IP estática = DHCP, es válido
+      } else {
+        var ipi=ip2int(ip), gwi=ip2int(gw), mi=ip2int(mask), d1i=ip2int(d1);
+        if(ipi===null) msg='Completa una dirección IP válida.';
+        else if(mi===null) msg='Elige una máscara de red.';
+        else if(gwi===null) msg='Completa una puerta de enlace válida.';
+        else if(((ipi&mi)>>>0)!==((gwi&mi)>>>0)) msg='La puerta de enlace no está en la misma red que la IP.';
+        else if(d1i===null) msg='Completa un DNS principal válido.';
+        else if(d2 && ip2int(d2)===null) msg='El DNS alternativo no es válido.';
+      }
+      if(err) err.textContent=msg;
+      if(btn) btn.disabled = !!msg;
+      return !msg;
+    }
+    function initAll(root){
+      initGroups(root);
+      root.querySelectorAll('form').forEach(function(f){
+        if(f.querySelector('.sfields')){
+          validateForm(f);
+          f.addEventListener('change', function(){ validateForm(f); });
+        }
+      });
+    }
+    document.addEventListener('DOMContentLoaded', function(){ initAll(document); });
+    document.body.addEventListener('htmx:afterSwap', function(e){ initAll(e.target); });
+  })();
+  </script>
 </body>
 </html>

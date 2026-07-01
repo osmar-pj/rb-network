@@ -43,14 +43,17 @@ def wifi_connect(
     request: Request,
     ssid: str = Form(...),
     password: str = Form(""),
-    ip_cidr: str = Form(""),
+    ip: str = Form(""),
+    mask: str = Form(""),
     gateway: str = Form(""),
-    dns: str = Form(""),
+    dns1: str = Form(""),
+    dns2: str = Form(""),
 ):
     ok, msg = network.connect_wifi(
-        ssid, password or None, ip_cidr or None, gateway or None, dns or None
+        ssid, password or None,
+        ip or None, mask or None, gateway or None, [dns1, dns2],
     )
-    modo = "IP estática" if ip_cidr else "DHCP"
+    modo = "IP estática" if ip else "DHCP"
     return _result(request, ok, f"WiFi '{ssid}' ({modo}): {msg}")
 
 
@@ -58,12 +61,14 @@ def wifi_connect(
 def connection_static(
     request: Request,
     con_name: str = Form(...),
-    ip_cidr: str = Form(...),
+    ip: str = Form(...),
+    mask: str = Form(...),
     gateway: str = Form(...),
-    dns: str = Form(...),
+    dns1: str = Form(...),
+    dns2: str = Form(""),
 ):
-    ok, msg = network.set_ethernet_static(con_name, ip_cidr, gateway, dns)
-    return _result(request, ok, f"'{con_name}' → IP estática: {msg}")
+    ok, msg = network.apply_static(con_name, ip, mask, gateway, [dns1, dns2])
+    return _result(request, ok, f"'{con_name}': {msg}")
 
 
 @app.post("/connection/dhcp", response_class=HTMLResponse)

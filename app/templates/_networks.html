@@ -1,3 +1,4 @@
+{% from '_static_fields.html' import static_fields %}
 {% if networks %}
 <div class="net-list">
   {% for n in networks %}
@@ -21,9 +22,7 @@
       {% endif %}
       <details class="static-toggle">
         <summary><svg class="icon chev"><use href="#i-chevron"/></svg> Usar IP estática (opcional)</summary>
-        <input name="ip_cidr" placeholder="IP / máscara (ej. 192.168.1.20/24)">
-        <input name="gateway" placeholder="Puerta de enlace (ej. 192.168.1.1)">
-        <input name="dns" placeholder="DNS (ej. 8.8.8.8)">
+        {{ static_fields(optional=true) }}
       </details>
       <button type="submit" class="btn-primary">Conectar</button>
     </form>
