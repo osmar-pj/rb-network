@@ -34,9 +34,8 @@
 
     /* header */
     header{display:flex; align-items:center; gap:.75rem; margin-bottom:1.75rem}
-    .brand{width:42px; height:42px; border-radius:12px; display:grid; place-items:center;
-      background:var(--accent); box-shadow:var(--shadow)}
-    .brand-mark{width:26px; height:26px; display:block}
+    .brand{display:grid; place-items:center}
+    .brand-mark{width:40px; height:40px; display:block; fill:currentColor; color:var(--accent)}
     header h1{font-size:1.15rem; font-weight:650; margin:0; letter-spacing:-.01em}
     header p{margin:0; font-size:.8rem; color:var(--muted)}
 
@@ -133,7 +132,7 @@
 <body>
   <!-- sprite de iconos minimalistas -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></symbol>
+    <symbol id="i-logo" viewBox="0 0 726 726"><path d="M363 725.993C310.159 725.993 259.201 714.885 211.54 692.976C198.64 687.044 192.989 671.78 198.918 658.877C204.849 645.977 220.117 640.316 233.017 646.255C273.894 665.048 317.628 674.574 363 674.574C534.803 674.574 674.577 534.803 674.577 363C674.577 191.194 534.803 51.4197 363 51.4197C191.197 51.4197 51.4231 191.194 51.4231 363C51.4231 420.084 66.9937 475.905 96.4429 524.421C103.815 536.563 99.9464 552.376 87.8115 559.741C75.6637 567.116 59.8574 563.245 52.4919 551.11C18.1506 494.54 0 429.493 0 363C0 162.842 162.842 -6.10352e-05 363 -6.10352e-05C563.158 -6.10352e-05 726 162.842 726 363C726 563.157 563.158 725.993 363 725.993Z" fill="currentColor"/><path d="M351.067 400.048C295.937 400.048 251.243 355.354 251.243 300.224C251.243 245.094 295.937 200.4 351.067 200.4C406.197 200.4 450.89 245.094 450.89 300.224C450.89 355.354 406.197 400.048 351.067 400.048ZM471.418 209.261C487.644 209.261 500.802 196.106 500.802 179.876C500.802 163.647 487.644 150.492 471.418 150.492C455.185 150.492 442.03 163.647 442.03 179.876C442.03 180.471 442.172 181.026 442.204 181.614C416.946 162.175 385.405 150.492 351.067 150.492C268.37 150.492 201.331 217.527 201.331 300.224C201.331 382.921 268.37 449.96 351.067 449.96C433.763 449.96 500.802 382.921 500.802 300.224C500.802 265.886 489.116 234.344 469.677 209.087C470.265 209.119 470.82 209.261 471.418 209.261Z" fill="currentColor"/><path d="M155.489 630.935C145.74 640.684 129.931 640.684 120.182 630.935C110.43 621.187 110.43 605.377 120.182 595.628C129.931 585.877 145.74 585.877 155.489 595.628C165.237 605.377 165.237 621.187 155.489 630.935Z" fill="currentColor"/><path d="M426.818 474.029C426.818 460.521 437.768 449.571 451.275 449.571C464.782 449.571 475.732 460.521 475.732 474.029L475.845 480.496C475.845 535.626 431.151 580.32 376.021 580.32L307.313 577.695C294.093 577.695 283.376 566.978 283.376 553.758C283.376 540.541 294.093 529.824 307.313 529.824H371.95C402.274 529.824 426.86 505.241 426.86 474.913L426.818 474.029Z" fill="currentColor"/></symbol>
     <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol>
     <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><path d="M2 9a15 15 0 0 1 20 0"/><path d="M12 19.5h.01"/></symbol>
     <symbol id="i-port" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="9" rx="1.5"/><path d="M8 8V5.5h8V8"/><path d="M8 17v1.5M12 17v1.5M16 17v1.5"/></symbol>
@@ -146,7 +145,7 @@
 
   <div class="wrap">
     <header>
-      <span class="brand"><img src="/static/logo.svg" alt="gunjop" class="brand-mark"></span>
+      <span class="brand"><svg class="brand-mark"><use href="#i-logo"/></svg></span>
       <div>
         <h1>gunjop-net</h1>
         <p>Gestor de red · Raspberry Pi</p>
