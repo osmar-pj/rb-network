@@ -87,13 +87,35 @@ def scan_wifi() -> list[dict]:
     return sorted(seen.values(), key=lambda e: e["signal"], reverse=True)
 
 
-def connect_wifi(ssid: str, password: str | None) -> tuple[bool, str]:
+def connect_wifi(
+    ssid: str,
+    password: str | None,
+    ip_cidr: str | None = None,
+    gateway: str | None = None,
+    dns: str | None = None,
+) -> tuple[bool, str]:
+    """Conecta a una red WiFi. Si se pasa ip_cidr, fija IP estática en el perfil."""
     args = ["device", "wifi", "connect", ssid]
     if password:
         args += ["password", password]
     res = _run(args, check=False)
-    ok = res.returncode == 0
-    return ok, (res.stdout if ok else res.stderr).strip()
+    if res.returncode != 0:
+        return False, res.stderr.strip()
+
+    if not ip_cidr:
+        return True, res.stdout.strip()
+
+    # nmcli nombra el perfil recién creado igual que el SSID: le aplicamos IP fija.
+    mod = _run(
+        ["con", "modify", ssid, "ipv4.method", "manual",
+         "ipv4.addresses", ip_cidr, "ipv4.gateway", gateway or "",
+         "ipv4.dns", dns or ""],
+        check=False,
+    )
+    if mod.returncode != 0:
+        return False, mod.stderr.strip()
+    up = _run(["con", "up", ssid], check=False)
+    return up.returncode == 0, (up.stdout if up.returncode == 0 else up.stderr).strip()
 
 
 # ---------------------------------------------------------------- ethernet

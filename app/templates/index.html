@@ -3,72 +3,203 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>gunjop-net</title>
+  <title>gunjop-net · Gestor de red</title>
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <style>
-    :root { color-scheme: light dark; }
-    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 0 auto; padding: 1rem; }
-    h1 { font-size: 1.4rem; }
-    section { border: 1px solid #8884; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
-    table { width: 100%; border-collapse: collapse; }
-    td, th { text-align: left; padding: .3rem; border-bottom: 1px solid #8882; }
-    input, button, select { font-size: 1rem; padding: .5rem; margin: .2rem 0; }
-    input { width: 100%; box-sizing: border-box; }
-    button { cursor: pointer; }
-    .net { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
-    #result:empty { display: none; }
-    .lock::after { content: " 🔒"; }
+    :root{
+      --bg:#f5f6f8; --surface:#fff; --surface-2:#fafbfc; --border:#e4e7ec;
+      --text:#111826; --muted:#667085; --accent:#4f46e5; --accent-weak:#4f46e510;
+      --ok:#16a34a; --err:#dc2626; --radius:14px;
+      --shadow:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+      color-scheme:light dark;
+    }
+    @media (prefers-color-scheme:dark){
+      :root{
+        --bg:#0e1116; --surface:#161b22; --surface-2:#1b212a; --border:#262d38;
+        --text:#e6e9ee; --muted:#8b96a5; --accent:#818cf8; --accent-weak:#818cf81a;
+        --shadow:0 1px 2px rgba(0,0,0,.3);
+      }
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+      background:var(--bg); color:var(--text); margin:0;
+      padding:2rem 1rem 4rem; line-height:1.5; -webkit-font-smoothing:antialiased;
+    }
+    .wrap{max-width:600px; margin:0 auto}
+    .icon{width:18px; height:18px; stroke:currentColor; stroke-width:1.75;
+      fill:none; stroke-linecap:round; stroke-linejoin:round; flex:none}
+
+    /* header */
+    header{display:flex; align-items:center; gap:.75rem; margin-bottom:1.75rem}
+    .brand{width:40px; height:40px; border-radius:11px; display:grid; place-items:center;
+      background:var(--accent); color:#fff; box-shadow:var(--shadow)}
+    .brand .icon{width:22px; height:22px; stroke-width:2}
+    header h1{font-size:1.15rem; font-weight:650; margin:0; letter-spacing:-.01em}
+    header p{margin:0; font-size:.8rem; color:var(--muted)}
+
+    /* cards */
+    .card{background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:1.1rem; overflow:hidden}
+    .card-head{display:flex; align-items:center; gap:.6rem; padding:.95rem 1.1rem;
+      border-bottom:1px solid var(--border)}
+    .card-head .icon{color:var(--muted)}
+    .card-head h2{font-size:.9rem; font-weight:600; margin:0; flex:1; letter-spacing:-.01em}
+    .card-body{padding:1.1rem}
+    .muted{color:var(--muted)}
+    .empty{color:var(--muted); font-size:.85rem; text-align:center; padding:1.5rem 0}
+
+    /* interfaces list */
+    .iface{display:flex; align-items:center; gap:.7rem; padding:.6rem 0;
+      border-bottom:1px solid var(--border)}
+    .iface:last-child{border-bottom:0}
+    .iface:first-child{padding-top:0}
+    .dot{width:8px; height:8px; border-radius:50%; background:var(--muted); flex:none}
+    .dot.on{background:var(--ok); box-shadow:0 0 0 3px var(--ok)22}
+    .iface .name{font-weight:550; font-size:.9rem}
+    .iface .sub{font-size:.75rem; color:var(--muted)}
+    .iface .ip{margin-left:auto; font-size:.8rem; color:var(--muted);
+      font-variant-numeric:tabular-nums}
+
+    /* inputs & buttons */
+    input{width:100%; font-size:.9rem; padding:.6rem .7rem; color:var(--text);
+      background:var(--surface-2); border:1px solid var(--border);
+      border-radius:9px; margin-top:.5rem; transition:border-color .15s, box-shadow .15s}
+    input::placeholder{color:var(--muted)}
+    input:focus{outline:none; border-color:var(--accent);
+      box-shadow:0 0 0 3px var(--accent-weak)}
+    button{display:inline-flex; align-items:center; justify-content:center; gap:.45rem;
+      font-size:.88rem; font-weight:550; font-family:inherit; cursor:pointer;
+      padding:.6rem 1rem; border-radius:9px; border:1px solid transparent; transition:.15s}
+    .btn-primary{background:var(--accent); color:#fff; width:100%; margin-top:.7rem}
+    .btn-primary:hover{filter:brightness(1.06)}
+    .btn-ghost{background:var(--surface-2); color:var(--text); border-color:var(--border); width:100%}
+    .btn-ghost:hover{border-color:var(--accent); color:var(--accent)}
+
+    /* scan */
+    .htmx-indicator{opacity:0; transition:opacity .2s}
+    .htmx-request .htmx-indicator, .htmx-request.htmx-indicator{opacity:1}
+    .spin{animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #networks:empty{display:none}
+
+    /* redes escaneadas */
+    .net-list{margin-top:.9rem; border-top:1px solid var(--border)}
+    .net{border-bottom:1px solid var(--border)}
+    .net>summary{display:flex; align-items:center; gap:.7rem; padding:.7rem .1rem;
+      cursor:pointer; list-style:none}
+    .net>summary::-webkit-details-marker{display:none}
+    .net .chev{margin-left:auto; color:var(--muted); transition:transform .2s}
+    .net[open] .chev{transform:rotate(180deg)}
+    .net .ssid{font-weight:550; font-size:.9rem; display:flex; align-items:center; gap:.4rem}
+    .net .ssid .icon{width:14px; height:14px; color:var(--muted)}
+    .net .ssid .badge{font-size:.65rem; font-weight:600; color:var(--ok);
+      border:1px solid #16a34a55; border-radius:5px; padding:.05rem .3rem}
+    .bars{display:flex; align-items:flex-end; gap:2px; height:15px}
+    .bars i{width:3px; border-radius:1px; background:var(--border)}
+    .bars i.f{background:var(--accent)}
+    .bars i:nth-child(1){height:5px}.bars i:nth-child(2){height:8px}
+    .bars i:nth-child(3){height:11px}.bars i:nth-child(4){height:15px}
+    .net-form{padding:.2rem .1rem .9rem}
+    .static-toggle{margin-top:.7rem; font-size:.82rem; color:var(--muted)}
+    .static-toggle>summary{cursor:pointer; list-style:none; display:inline-flex;
+      align-items:center; gap:.35rem; user-select:none}
+    .static-toggle>summary::-webkit-details-marker{display:none}
+    .static-toggle[open]>summary .chev{transform:rotate(180deg)}
+    .static-toggle .chev{width:14px; height:14px; transition:transform .2s}
+
+    #result:empty{display:none}
+    #result{margin-bottom:1.1rem}
+    .banner{display:flex; align-items:center; gap:.6rem; padding:.75rem .9rem;
+      border-radius:11px; font-size:.85rem; border:1px solid}
+    .banner.ok{background:#16a34a12; border-color:#16a34a44; color:var(--ok)}
+    .banner.err{background:#dc262612; border-color:#dc262644; color:var(--err)}
   </style>
 </head>
 <body>
-  <h1>🌐 gunjop-net</h1>
-  <div id="result"></div>
+  <!-- sprite de iconos minimalistas -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><path d="M2 9a15 15 0 0 1 20 0"/><path d="M12 19.5h.01"/></symbol>
+    <symbol id="i-port" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="9" rx="1.5"/><path d="M8 8V5.5h8V8"/><path d="M8 17v1.5M12 17v1.5M16 17v1.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+  </defs></svg>
 
-  <section>
-    <h2>Interfaces</h2>
-    <table>
-      <tr><th>Dispositivo</th><th>Estado</th><th>IP</th></tr>
-      {% for d in devices %}
-      <tr><td>{{ d.device }} <small>({{ d.type }})</small></td>
-          <td>{{ d.state }}</td><td>{{ d.ip or "—" }}</td></tr>
-      {% endfor %}
-    </table>
-  </section>
+  <div class="wrap">
+    <header>
+      <span class="brand"><svg class="icon"><use href="#i-globe"/></svg></span>
+      <div>
+        <h1>gunjop-net</h1>
+        <p>Gestor de red · Raspberry Pi</p>
+      </div>
+    </header>
 
-  <section>
-    <h2>WiFi disponibles</h2>
-    {% for n in networks %}
-    <details>
-      <summary class="net">
-        <span class="{{ 'lock' if n.secured }}">{{ n.ssid }}{{ " ✓" if n.active }}</span>
-        <span>{{ n.signal }}%</span>
-      </summary>
-      <form hx-post="/wifi/connect" hx-target="#result">
-        <input type="hidden" name="ssid" value="{{ n.ssid }}">
-        {% if n.secured %}
-        <input type="password" name="password" placeholder="Contraseña" required>
-        {% endif %}
-        <button type="submit">Conectar</button>
-      </form>
-    </details>
-    {% else %}
-    <p>No se encontraron redes.</p>
-    {% endfor %}
-  </section>
+    <div id="result"></div>
 
-  <section>
-    <h2>Ethernet (IP estática)</h2>
-    <form hx-post="/ethernet/static" hx-target="#result">
-      <input name="con_name" placeholder="Nombre conexión (ej. Wired connection 1)" required>
-      <input name="ip_cidr" placeholder="IP/máscara (ej. 192.168.1.10/24)" required>
-      <input name="gateway" placeholder="Gateway (ej. 192.168.1.1)" required>
-      <input name="dns" placeholder="DNS (ej. 8.8.8.8)" required>
-      <button type="submit">Aplicar estática</button>
-    </form>
-    <form hx-post="/ethernet/dhcp" hx-target="#result">
-      <input name="con_name" placeholder="Nombre conexión" required>
-      <button type="submit">Volver a DHCP</button>
-    </form>
-  </section>
+    <!-- Interfaces -->
+    <section class="card">
+      <div class="card-head">
+        <svg class="icon"><use href="#i-server"/></svg>
+        <h2>Interfaces</h2>
+      </div>
+      <div class="card-body">
+        {% for d in devices %}
+        <div class="iface">
+          <span class="dot {{ 'on' if d.state == 'connected' }}"></span>
+          <div>
+            <div class="name">{{ d.device }}</div>
+            <div class="sub">{{ d.type }} · {{ d.state }}</div>
+          </div>
+          <span class="ip">{{ d.ip or "—" }}</span>
+        </div>
+        {% else %}
+        <p class="empty">Sin interfaces detectadas.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- WiFi -->
+    <section class="card">
+      <div class="card-head">
+        <svg class="icon"><use href="#i-wifi"/></svg>
+        <h2>Redes WiFi</h2>
+      </div>
+      <div class="card-body">
+        <button class="btn-ghost" hx-get="/wifi/scan" hx-target="#networks"
+                hx-indicator="this">
+          <svg class="icon htmx-indicator spin"><use href="#i-refresh"/></svg>
+          <svg class="icon" style="display:none"><use href="#i-refresh"/></svg>
+          Buscar redes
+        </button>
+        <div id="networks"></div>
+      </div>
+    </section>
+
+    <!-- Ethernet -->
+    <section class="card">
+      <div class="card-head">
+        <svg class="icon"><use href="#i-port"/></svg>
+        <h2>Ethernet</h2>
+      </div>
+      <div class="card-body">
+        <form hx-post="/ethernet/static" hx-target="#result">
+          <input name="con_name" placeholder="Nombre de la conexión (ej. Wired connection 1)" required>
+          <input name="ip_cidr" placeholder="IP / máscara (ej. 192.168.1.10/24)" required>
+          <input name="gateway" placeholder="Puerta de enlace (ej. 192.168.1.1)" required>
+          <input name="dns" placeholder="DNS (ej. 8.8.8.8)" required>
+          <button type="submit" class="btn-primary">Aplicar IP estática</button>
+        </form>
+        <form hx-post="/ethernet/dhcp" hx-target="#result" style="margin-top:.9rem">
+          <input name="con_name" placeholder="Nombre de la conexión" required>
+          <button type="submit" class="btn-ghost" style="margin-top:.6rem">Volver a DHCP</button>
+        </form>
+      </div>
+    </section>
+  </div>
 </body>
 </html>

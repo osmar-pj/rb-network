@@ -17,20 +17,34 @@ templates = Jinja2Templates(directory=str(BASE / "templates"))
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
+    # No escaneamos WiFi al cargar: la página abre al instante y el usuario
+    # busca redes cuando pulsa "Buscar redes" (ruta /wifi/scan).
     return templates.TemplateResponse(
-        request,
-        "index.html",
-        {
-            "devices": network.get_devices(),
-            "networks": network.scan_wifi(),
-        },
+        request, "index.html", {"devices": network.get_devices()}
+    )
+
+
+@app.get("/wifi/scan", response_class=HTMLResponse)
+def wifi_scan(request: Request):
+    return templates.TemplateResponse(
+        request, "_networks.html", {"networks": network.scan_wifi()}
     )
 
 
 @app.post("/wifi/connect", response_class=HTMLResponse)
-def wifi_connect(request: Request, ssid: str = Form(...), password: str = Form("")):
-    ok, msg = network.connect_wifi(ssid, password or None)
-    return _result(request, ok, f"WiFi '{ssid}': {msg}")
+def wifi_connect(
+    request: Request,
+    ssid: str = Form(...),
+    password: str = Form(""),
+    ip_cidr: str = Form(""),
+    gateway: str = Form(""),
+    dns: str = Form(""),
+):
+    ok, msg = network.connect_wifi(
+        ssid, password or None, ip_cidr or None, gateway or None, dns or None
+    )
+    modo = "IP estática" if ip_cidr else "DHCP"
+    return _result(request, ok, f"WiFi '{ssid}' ({modo}): {msg}")
 
 
 @app.post("/ethernet/static", response_class=HTMLResponse)

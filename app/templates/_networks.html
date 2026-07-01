@@ -1,0 +1,35 @@
+{% if networks %}
+<div class="net-list">
+  {% for n in networks %}
+  {% set lvl = 4 if n.signal >= 75 else 3 if n.signal >= 50 else 2 if n.signal >= 25 else 1 %}
+  <details class="net">
+    <summary>
+      <span class="ssid">
+        {% if n.secured %}<svg class="icon"><use href="#i-lock"/></svg>{% endif %}
+        {{ n.ssid }}
+        {% if n.active %}<span class="badge">Conectada</span>{% endif %}
+      </span>
+      <span class="bars" title="{{ n.signal }}%">
+        {% for i in range(1, 5) %}<i class="{{ 'f' if i <= lvl }}"></i>{% endfor %}
+      </span>
+      <svg class="icon chev"><use href="#i-chevron"/></svg>
+    </summary>
+    <form class="net-form" hx-post="/wifi/connect" hx-target="#result">
+      <input type="hidden" name="ssid" value="{{ n.ssid }}">
+      {% if n.secured %}
+      <input type="password" name="password" placeholder="Contraseña" required autocomplete="off">
+      {% endif %}
+      <details class="static-toggle">
+        <summary><svg class="icon chev"><use href="#i-chevron"/></svg> Usar IP estática (opcional)</summary>
+        <input name="ip_cidr" placeholder="IP / máscara (ej. 192.168.1.20/24)">
+        <input name="gateway" placeholder="Puerta de enlace (ej. 192.168.1.1)">
+        <input name="dns" placeholder="DNS (ej. 8.8.8.8)">
+      </details>
+      <button type="submit" class="btn-primary">Conectar</button>
+    </form>
+  </details>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">No se encontraron redes. Acerca el dispositivo o vuelve a buscar.</p>
+{% endif %}
