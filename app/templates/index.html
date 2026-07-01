@@ -50,16 +50,28 @@
     .empty{color:var(--muted); font-size:.85rem; text-align:center; padding:1.5rem 0}
 
     /* interfaces list */
-    .iface{display:flex; align-items:center; gap:.7rem; padding:.6rem 0;
-      border-bottom:1px solid var(--border)}
+    .iface{border-bottom:1px solid var(--border)}
     .iface:last-child{border-bottom:0}
-    .iface:first-child{padding-top:0}
+    .iface>summary,.iface.static-row{display:flex; align-items:center; gap:.7rem;
+      padding:.7rem .1rem; list-style:none; cursor:pointer}
+    .iface.static-row{cursor:default}
+    .iface>summary::-webkit-details-marker{display:none}
     .dot{width:8px; height:8px; border-radius:50%; background:var(--muted); flex:none}
     .dot.on{background:var(--ok); box-shadow:0 0 0 3px var(--ok)22}
-    .iface .name{font-weight:550; font-size:.9rem}
+    .iface-info{min-width:0}
+    .iface .name{font-weight:600; font-size:.9rem; white-space:nowrap;
+      overflow:hidden; text-overflow:ellipsis}
     .iface .sub{font-size:.75rem; color:var(--muted)}
     .iface .ip{margin-left:auto; font-size:.8rem; color:var(--muted);
-      font-variant-numeric:tabular-nums}
+      font-variant-numeric:tabular-nums; white-space:nowrap}
+    .iface .chev{color:var(--muted); transition:transform .2s; flex:none}
+    .iface[open] .chev{transform:rotate(180deg)}
+    .iface-edit{padding:.1rem .1rem 1rem}
+    .iface-edit .lbl{font-size:.75rem; font-weight:600; color:var(--muted);
+      text-transform:uppercase; letter-spacing:.03em; margin:.3rem 0 .1rem}
+    .tag{font-size:.68rem; font-weight:600; padding:.1rem .4rem; border-radius:5px;
+      border:1px solid var(--border); color:var(--muted); flex:none}
+    .tag.manual{color:var(--accent); border-color:var(--accent)}
 
     /* inputs & buttons */
     input{width:100%; font-size:.9rem; padding:.6rem .7rem; color:var(--text);
@@ -149,14 +161,44 @@
       </div>
       <div class="card-body">
         {% for d in devices %}
-        <div class="iface">
-          <span class="dot {{ 'on' if d.state == 'connected' }}"></span>
-          <div>
+        {% if d.connection %}
+        <details class="iface">
+          <summary>
+            <span class="dot on"></span>
+            <div class="iface-info">
+              <div class="name">{{ d.connection }}</div>
+              <div class="sub">{{ d.device }} · {{ d.type }}</div>
+            </div>
+            <span class="tag {{ 'manual' if d.method == 'manual' }}">{{ "Estática" if d.method == "manual" else "DHCP" }}</span>
+            <span class="ip">{{ d.ip or "—" }}</span>
+            <svg class="icon chev"><use href="#i-chevron"/></svg>
+          </summary>
+          <div class="iface-edit">
+            <div class="lbl">IP fija (estática)</div>
+            <form hx-post="/connection/static" hx-target="#result">
+              <input type="hidden" name="con_name" value="{{ d.connection }}">
+              <input name="ip_cidr" value="{{ d.ip or '' }}" placeholder="IP / máscara (ej. 192.168.1.10/24)" required>
+              <input name="gateway" value="{{ d.gateway }}" placeholder="Puerta de enlace (ej. 192.168.1.1)" required>
+              <input name="dns" value="{{ d.dns }}" placeholder="DNS (ej. 8.8.8.8)" required>
+              <button type="submit" class="btn-primary">Guardar IP estática</button>
+            </form>
+            <div class="lbl" style="margin-top:1rem">Automática</div>
+            <form hx-post="/connection/dhcp" hx-target="#result">
+              <input type="hidden" name="con_name" value="{{ d.connection }}">
+              <button type="submit" class="btn-ghost">Cambiar a DHCP</button>
+            </form>
+          </div>
+        </details>
+        {% else %}
+        <div class="iface static-row">
+          <span class="dot"></span>
+          <div class="iface-info">
             <div class="name">{{ d.device }}</div>
             <div class="sub">{{ d.type }} · {{ d.state }}</div>
           </div>
-          <span class="ip">{{ d.ip or "—" }}</span>
+          <span class="ip">—</span>
         </div>
+        {% endif %}
         {% else %}
         <p class="empty">Sin interfaces detectadas.</p>
         {% endfor %}
@@ -180,26 +222,6 @@
       </div>
     </section>
 
-    <!-- Ethernet -->
-    <section class="card">
-      <div class="card-head">
-        <svg class="icon"><use href="#i-port"/></svg>
-        <h2>Ethernet</h2>
-      </div>
-      <div class="card-body">
-        <form hx-post="/ethernet/static" hx-target="#result">
-          <input name="con_name" placeholder="Nombre de la conexión (ej. Wired connection 1)" required>
-          <input name="ip_cidr" placeholder="IP / máscara (ej. 192.168.1.10/24)" required>
-          <input name="gateway" placeholder="Puerta de enlace (ej. 192.168.1.1)" required>
-          <input name="dns" placeholder="DNS (ej. 8.8.8.8)" required>
-          <button type="submit" class="btn-primary">Aplicar IP estática</button>
-        </form>
-        <form hx-post="/ethernet/dhcp" hx-target="#result" style="margin-top:.9rem">
-          <input name="con_name" placeholder="Nombre de la conexión" required>
-          <button type="submit" class="btn-ghost" style="margin-top:.6rem">Volver a DHCP</button>
-        </form>
-      </div>
-    </section>
   </div>
 </body>
 </html>

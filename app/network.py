@@ -37,12 +37,13 @@ def _parse_terse(output: str) -> list[list[str]]:
 # ---------------------------------------------------------------- estado
 
 def get_devices() -> list[dict]:
-    """Estado de cada interfaz física: nombre, tipo, estado, conexión activa."""
+    """Estado de cada interfaz física: nombre, tipo, estado, conexión activa e IP."""
     res = _run(["-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device", "status"])
     devices = []
     for dev, typ, state, con in _parse_terse(res.stdout):
         if typ in ("loopback", "wifi-p2p"):
             continue
+        ipv4 = _con_ipv4(con) if con else {}
         devices.append(
             {
                 "device": dev,
@@ -50,9 +51,25 @@ def get_devices() -> list[dict]:
                 "state": state,
                 "connection": con or None,
                 "ip": _device_ip(dev),
+                "method": ipv4.get("method"),   # "auto" (DHCP) o "manual" (estática)
+                "gateway": ipv4.get("gateway", ""),
+                "dns": ipv4.get("dns", ""),
             }
         )
     return devices
+
+
+def _con_ipv4(con_name: str) -> dict:
+    """Devuelve la configuración IPv4 de un perfil: método, gateway y DNS."""
+    res = _run(
+        ["-t", "-f", "ipv4.method,ipv4.gateway,ipv4.dns", "con", "show", con_name],
+        check=False,
+    )
+    out: dict[str, str] = {}
+    for row in _parse_terse(res.stdout):
+        if len(row) >= 2:
+            out[row[0].split(".")[-1]] = row[1]  # ipv4.method -> "method", etc.
+    return out
 
 
 def _device_ip(device: str) -> str | None:
