@@ -1,0 +1,12 @@
+# Configuración de gunjop-net — cambia estos valores para replicar en otra RPi
+web:
+  host: "0.0.0.0"      # 0.0.0.0 = accesible por AP y por WiFi/Ethernet a la vez
+  port: 3000
+
+ap:
+  enabled: true         # AP siempre activo
+  ssid: "wapsi"
+  password: "12345678"  # vacío = red abierta; pon 8+ caracteres para WPA2
+  ip: "192.168.4.1"
+  interface: "wlan0"    # usa "ap0"/"uap0" si tu driver requiere interfaz virtual
+  con_name: "gunjop-ap" # nombre del perfil en NetworkManager

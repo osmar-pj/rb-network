@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>gunjop-net</title>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 0 auto; padding: 1rem; }
+    h1 { font-size: 1.4rem; }
+    section { border: 1px solid #8884; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { text-align: left; padding: .3rem; border-bottom: 1px solid #8882; }
+    input, button, select { font-size: 1rem; padding: .5rem; margin: .2rem 0; }
+    input { width: 100%; box-sizing: border-box; }
+    button { cursor: pointer; }
+    .net { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+    #result:empty { display: none; }
+    .lock::after { content: " 🔒"; }
+  </style>
+</head>
+<body>
+  <h1>🌐 gunjop-net</h1>
+  <div id="result"></div>
+
+  <section>
+    <h2>Interfaces</h2>
+    <table>
+      <tr><th>Dispositivo</th><th>Estado</th><th>IP</th></tr>
+      {% for d in devices %}
+      <tr><td>{{ d.device }} <small>({{ d.type }})</small></td>
+          <td>{{ d.state }}</td><td>{{ d.ip or "—" }}</td></tr>
+      {% endfor %}
+    </table>
+  </section>
+
+  <section>
+    <h2>WiFi disponibles</h2>
+    {% for n in networks %}
+    <details>
+      <summary class="net">
+        <span class="{{ 'lock' if n.secured }}">{{ n.ssid }}{{ " ✓" if n.active }}</span>
+        <span>{{ n.signal }}%</span>
+      </summary>
+      <form hx-post="/wifi/connect" hx-target="#result">
+        <input type="hidden" name="ssid" value="{{ n.ssid }}">
+        {% if n.secured %}
+        <input type="password" name="password" placeholder="Contraseña" required>
+        {% endif %}
+        <button type="submit">Conectar</button>
+      </form>
+    </details>
+    {% else %}
+    <p>No se encontraron redes.</p>
+    {% endfor %}
+  </section>
+
+  <section>
+    <h2>Ethernet (IP estática)</h2>
+    <form hx-post="/ethernet/static" hx-target="#result">
+      <input name="con_name" placeholder="Nombre conexión (ej. Wired connection 1)" required>
+      <input name="ip_cidr" placeholder="IP/máscara (ej. 192.168.1.10/24)" required>
+      <input name="gateway" placeholder="Gateway (ej. 192.168.1.1)" required>
+      <input name="dns" placeholder="DNS (ej. 8.8.8.8)" required>
+      <button type="submit">Aplicar estática</button>
+    </form>
+    <form hx-post="/ethernet/dhcp" hx-target="#result">
+      <input name="con_name" placeholder="Nombre conexión" required>
+      <button type="submit">Volver a DHCP</button>
+    </form>
+  </section>
+</body>
+</html>

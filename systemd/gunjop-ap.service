@@ -1,0 +1,13 @@
+[Unit]
+Description=gunjop-net — levanta el AP por defecto
+After=NetworkManager.service
+Wants=NetworkManager.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/gunjop-net
+ExecStart=/opt/gunjop-net/venv/bin/python -m app.ap_up
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
