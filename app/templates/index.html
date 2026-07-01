@@ -10,7 +10,7 @@
   <style>
     :root{
       --bg:#f5f6f8; --surface:#fff; --surface-2:#fafbfc; --border:#e4e7ec;
-      --text:#111826; --muted:#667085; --accent:#4f46e5; --accent-weak:#4f46e510;
+      --text:#111826; --muted:#667085; --accent:#EE3E2C; --accent-weak:#EE3E2C14;
       --ok:#16a34a; --err:#dc2626; --radius:14px;
       --shadow:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
       color-scheme:light dark;
@@ -18,7 +18,7 @@
     @media (prefers-color-scheme:dark){
       :root{
         --bg:#0e1116; --surface:#161b22; --surface-2:#1b212a; --border:#262d38;
-        --text:#e6e9ee; --muted:#8b96a5; --accent:#818cf8; --accent-weak:#818cf81a;
+        --text:#e6e9ee; --muted:#8b96a5; --accent:#F4604F; --accent-weak:#F4604F1a;
         --shadow:0 1px 2px rgba(0,0,0,.3);
       }
     }
@@ -35,7 +35,7 @@
     /* header */
     header{display:flex; align-items:center; gap:.75rem; margin-bottom:1.75rem}
     .brand{display:grid; place-items:center}
-    .brand-mark{width:38px; height:38px; display:block; color:var(--accent)}
+    .brand-mark{width:38px; height:38px; display:block; color:var(--text)}
     .wordmark{height:30px; width:auto; display:block; color:var(--accent)}
     .brandbox p{margin:.25rem 0 0}
     header h1{font-size:1.15rem; font-weight:650; margin:0; letter-spacing:-.01em}
