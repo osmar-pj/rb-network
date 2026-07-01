@@ -13,27 +13,12 @@
 {% endmacro %}
 
 {% macro static_fields(ip_addr='', mask='', gateway='', dns1='', dns2='', optional=false) %}
-{% set MASKS = [
-  ('255.255.255.0', '254 equipos'),
-  ('255.255.255.128', '126 equipos'),
-  ('255.255.255.192', '62 equipos'),
-  ('255.255.255.224', '30 equipos'),
-  ('255.255.255.240', '14 equipos'),
-  ('255.255.255.248', '6 equipos'),
-  ('255.255.255.252', '2 equipos'),
-  ('255.255.0.0', '65534 equipos'),
-  ('255.0.0.0', 'clase A')
-] %}
 <div class="sfields"{{ ' data-optional' if optional else '' }}>
   <label class="fl">Dirección IP</label>
   {{ _oct('ip', ip_addr) }}
 
-  <label class="fl">Máscara de red</label>
-  <select class="sel" name="mask">
-    {% for m, lbl in MASKS %}
-    <option value="{{ m }}"{{ ' selected' if (mask == m) or (not mask and m == '255.255.255.0') else '' }}>{{ m }} — {{ lbl }}</option>
-    {% endfor %}
-  </select>
+  <label class="fl">Máscara de red <span class="opt">· ej. 255.255.255.0</span></label>
+  {{ _oct('mask', mask) }}
 
   <label class="fl">Puerta de enlace (Gateway)</label>
   {{ _oct('gateway', gateway) }}

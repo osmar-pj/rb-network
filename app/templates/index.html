@@ -192,7 +192,7 @@
               <div class="sub">{{ d.device }} · {{ d.type }}</div>
             </div>
             <span class="tag {{ 'manual' if d.method == 'manual' }}">{{ "Estática" if d.method == "manual" else "DHCP" }}</span>
-            <span class="ip">{{ d.ip or "—" }}</span>
+            <span class="ip">{{ d.ip_addr or "—" }}</span>
             <svg class="icon chev"><use href="#i-chevron"/></svg>
           </summary>
           <div class="iface-edit">
@@ -258,6 +258,12 @@
       }
       return n>>>0;
     }
+    // Máscara válida = unos contiguos seguidos de ceros (rechaza 255.255.255.5, etc.)
+    function maskValid(m){
+      if(m===null || m===0) return false;
+      var inv=(~m)>>>0;                 // parte de host: debe ser 000..111
+      return ((inv & (inv+1)) >>> 0) === 0;
+    }
     // Inicializa las cajitas por octeto: solo dígitos, 0-255, auto-avance, pegar
     function initGroups(root){
       root.querySelectorAll('.ipgroup').forEach(function(g){
@@ -302,7 +308,7 @@
       } else {
         var ipi=ip2int(ip), gwi=ip2int(gw), mi=ip2int(mask), d1i=ip2int(d1);
         if(ipi===null) msg='Completa una dirección IP válida.';
-        else if(mi===null) msg='Elige una máscara de red.';
+        else if(!maskValid(mi)) msg='Completa una máscara de red válida (ej. 255.255.255.0).';
         else if(gwi===null) msg='Completa una puerta de enlace válida.';
         else if(((ipi&mi)>>>0)!==((gwi&mi)>>>0)) msg='La puerta de enlace no está en la misma red que la IP.';
         else if(d1i===null) msg='Completa un DNS principal válido.';
